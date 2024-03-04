@@ -11,8 +11,9 @@ export default function EditPage() {
 
     const { nodes, addNode, addLine, lines, resetGraph, deleteGraph } = useGraph();
 
-
     const [node, setNode] = React.useState<INode | null>(null);
+    const [shortName, setShortName] = React.useState<string>('');
+
     const [nodeError, setNodeError] = React.useState<boolean>(false);
 
     const [source, setSource] = React.useState<INode | null>(null);
@@ -24,12 +25,13 @@ export default function EditPage() {
 
 
     const addNodeToGraph = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-        if (node === null) {
+        if (node === null || shortName === '') {
             setNodeError(true);
             return;
         }
-        setNodeError(!addNode(node));
+        setNodeError(!addNode({ ...node, shortName }));
         setNode(null);
+        setShortName('');
     }
 
     const addLineToGraph = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
@@ -38,7 +40,7 @@ export default function EditPage() {
             return;
         }
         setLineError(!addLine({
-            id: lines[lines.length - 1].id + 1,
+            id: lines.length > 0 ? lines[lines.length - 1].id + 1 : 0,
             source: source,
             target: target,
             weight: Number(weight),
@@ -77,7 +79,7 @@ export default function EditPage() {
                 Додавання вершини
             </Typography>
             <Autocomplete
-                sx={{ marginTop: '20px', marginBottom: nodeError ? '10px' : '20px' }}
+                sx={{ marginBlock: '20px' }}
                 disablePortal
                 id="city-select"
                 options={ua_cities as INode[]}
@@ -87,6 +89,10 @@ export default function EditPage() {
                 renderInput={(params) => <TextField {...params} label="Вершина" />}
                 noOptionsText='Немає вершин'
             />
+            <TextField fullWidth id="short-name" label="Коротка назва" variant="outlined" value={shortName}
+                sx={{ marginBottom: nodeError ? '10px' : '20px' }}
+                onChange={(e) => setShortName(e.target.value)}
+                disabled={!node} />
             {nodeError &&
                 <Typography variant='body2' color='error'>
                     Така вершина вже існує
@@ -144,7 +150,7 @@ export default function EditPage() {
             <Typography variant='h6' mt={2} mb={1}>
                 Керування графом
             </Typography>
-            <ButtonGroup variant="outlined" aria-label="graph managment" sx={{mt: 2}} fullWidth>
+            <ButtonGroup variant="outlined" aria-label="graph managment" sx={{ mt: 2 }} fullWidth>
                 <Button onClick={saveAsJson}>Зберегти як JSON</Button>
                 <Button onClick={resetGraph}>Скинути</Button>
                 <Button onClick={deleteGraph}>Видалити</Button>

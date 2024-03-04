@@ -12,6 +12,8 @@ interface GraphContextProps {
     changeLine: (lineId: number | undefined, weight: number) => void,
     resetGraph: () => void,
     deleteGraph: () => void,
+    selectPath: (nodesParam: INode[]) => void,
+    resetPath: ()=>void,
 }
 
 const GraphContext = React.createContext<GraphContextProps | undefined>(undefined);
@@ -108,8 +110,47 @@ export function GraphProvider({ children }: GraphProviderProps) {
         setNodes([]);
     }
 
+
+    const selectPath = (nodesParam: INode[]) => {
+        setNodesState((prevValue) => {
+            return prevValue.map(node => {
+                const isSelected = nodesParam.some(paramNode => paramNode.id === node.id);
+                return {
+                    ...node,
+                    selected: isSelected
+                };
+            });
+        });
+        if (nodesParam.length < 2) return;
+        setLinesState(prevLines => {
+            const array = [...prevLines];
+            for (let i = 0; i < nodesParam.length - 1; i++) {
+              const index = array.findIndex(line => 
+                (line.source.id === nodesParam[i].id && line.target.id === nodesParam[i + 1].id) ||
+                (line.source.id === nodesParam[i + 1].id && line.target.id === nodesParam[i].id)
+              );
+          
+              if (index !== -1) {
+                array[index].selected = true;
+              }
+            }
+            return array;
+          });
+    }
+
+    const reset = (array: (INode | ILine)[]): (INode | ILine)[] => {
+        return array.map(item => {
+          return { ...item, selected: undefined };
+        });
+      };
+
+    const resetPath = () => {
+        setNodesState((prevValue)=> {return reset(prevValue) as INode[];});
+        setLinesState((prevValue)=> {return reset(prevValue) as ILine[];});
+    }
+
     return (
-        <GraphContext.Provider value={{ nodes, addNode, lines, addLine, deleteNode, deleteLine, changeLine, resetGraph, deleteGraph }}>
+        <GraphContext.Provider value={{ nodes, addNode, lines, addLine, deleteNode, deleteLine, changeLine, resetGraph, deleteGraph, selectPath, resetPath}}>
             {children}
         </GraphContext.Provider>
     );
