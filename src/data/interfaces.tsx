@@ -12,13 +12,17 @@ export interface INode {
 
 export interface ILine {
     id: number,
-    source: INode,
-    target: INode,
+    nodesId: [number, number],
     weight: number,
-    selected?: boolean,
 }
 
 export interface IGraph {
     nodes: INode[],
     lines: ILine[],
+}
+
+export interface IShortestPath {
+    nodes?: string,
+    weight?: number,
+    time?: number,
 }

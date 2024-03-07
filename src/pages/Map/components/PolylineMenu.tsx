@@ -11,13 +11,15 @@ interface IPolylineMenuProps {
 }
 export default function PolylineMenu({ anchorPosition, onClose, line }: IPolylineMenuProps) {
     const theme = useTheme();
+    const {getNodesFromLine} = useGraph();
+    const { source, target } = line ? getNodesFromLine(line) : { source: undefined, target: undefined };
     const menuItemList = [
-        { Icon: FmdGood, label: 'м. ' + line?.source.name, },
-        { Icon: FmdGood, label: 'м. ' + line?.target.name, },
+        { Icon: FmdGood, label: 'м. ' + source?.name, },
+        { Icon: FmdGood, label: 'м. ' + target?.name, },
         { Icon: Straighten, label: line?.weight + ' км.', },
     ]
 
-    const { changeLine, deleteLine } = useGraph();
+    const { updateLine, deleteLine } = useGraph();
     const [deleteDialogOpen, setDeleteDialogOpen] = React.useState<boolean>(false);
     const [changeDialogOpen, setChangeDialogOpen] = React.useState<boolean>(false);
     const [weightError, setWeightError] = React.useState<boolean>(false);
@@ -66,7 +68,7 @@ export default function PolylineMenu({ anchorPosition, onClose, line }: IPolylin
                     <DialogContentText id="alert-dialog-description">
                         Ця дія призведе до видалення<br />
                         &ensp;ребра:<br />
-                        &emsp;– {line?.source.name + ' - ' + line?.target.name}<br />
+                        &emsp;– {source?.name + ' - ' + target?.name}<br />
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
@@ -83,7 +85,7 @@ export default function PolylineMenu({ anchorPosition, onClose, line }: IPolylin
                 <DialogTitle>Редагування</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        Введіть нову вагу для ребра: {line?.source.name + ' - ' + line?.target.name}:
+                        Введіть нову вагу для ребра: {source?.name + ' - ' + target?.name}:
                     </DialogContentText>
                     <TextField
                         autoFocus
@@ -108,7 +110,7 @@ export default function PolylineMenu({ anchorPosition, onClose, line }: IPolylin
                 <DialogActions>
                     <Button onClick={() => {setChangeDialogOpen(false); setWeight('')}}>Скасувати</Button>
                     <Button disabled={weight === ''} color='warning'
-                        onClick={() => { changeLine(line?.id, Number(weight)); setWeight(''); setChangeDialogOpen(false); onClose({}, 'backdropClick'); }}>Змінити</Button>
+                        onClick={() => { updateLine(line?.id, Number(weight)); setWeight(''); setChangeDialogOpen(false); onClose({}, 'backdropClick'); }}>Змінити</Button>
                 </DialogActions>
             </Dialog >
         </>

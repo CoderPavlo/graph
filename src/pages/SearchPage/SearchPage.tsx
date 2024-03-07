@@ -1,71 +1,44 @@
 import React from 'react'
-import { Autocomplete, Box, Button, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, TextField, Typography } from '@mui/material'
+import { Autocomplete, Box, Button, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, Switch, TextField, Typography } from '@mui/material'
 import { useGraph } from '../../context/Graph';
-import { ILine, INode } from '../../data/interfaces';
+import { INode, IShortestPath } from '../../data/interfaces';
 
+import { useTheme } from '@mui/material/styles';
 
+export interface ISearchSettings{
+    source: INode | null,
+    target: INode | null,
+    visualisation: boolean,
+}
 export default function SearchPage() {
-    const { nodes, lines, selectPath, resetPath} = useGraph();
-    const [sourceNode, setSourceNode] = React.useState<INode | null>(null);
-    const [targetNode, setTargetNode] = React.useState<INode | null>(null);
+    const theme = useTheme();
+    const { nodes, resetPath, dfs } = useGraph();
 
-    interface IPath {
-        node: INode,
-        pointers: INode[],
-        weight: number,
-    }
+    const [path, setPath] = React.useState<IShortestPath>({});
+    const [settings, setSettings] = React.useState<ISearchSettings>({source: null, target: null, visualisation: false});
 
-    function iSShortestPath(current: IPath, paths: IPath[]): boolean{
-        //Перевіряє чи шлях вже є в масиві і якщо так то чи довжина менша за наявну в масиві
-        return !paths.some(path=>path.node.id === current.node.id && path.weight <= current.weight);
-    }
-
-    async function dfs() {
+    function changeSettings(key: 'source' | 'target' | 'visualisation', value: INode | boolean | null) {
+        setPath({});
         resetPath();
-        if (!sourceNode || !targetNode) {
-            console.error("Start or target node not found");
-            return null;
-        }
-        let unrevealed: IPath[] = [{ node: sourceNode, pointers: [], weight: 0 }];
-        let revealed: IPath[] = [];
-
-        while (unrevealed.length > 0) {
-            const currentNode: IPath = unrevealed.pop()!;
-            revealed.push(currentNode);
-
-            if (targetNode.id !== currentNode.node.id) {
-                const neighbors = getNeighbors(currentNode);
-                neighbors.forEach((neighbor) => {
-                    if (iSShortestPath(neighbor, revealed) && iSShortestPath(neighbor, unrevealed))
-                        unrevealed.push(neighbor);
-                });
-            }
-        }
-        const pathsToTarget = revealed.filter(path => path.node.id === targetNode.id);
-        const minWeightPath = pathsToTarget.reduce((minPath, path) => (path.weight < minPath.weight ? path : minPath), pathsToTarget[0]);
-        const path=[...minWeightPath.pointers, minWeightPath.node];
-        console.log(path);
-        selectPath(path);
-    }
-
-    function getNeighbors(current: IPath): IPath[] {
-        const neighbors: IPath[] = [];
-        lines.forEach((line) => {
-            const isSourceNode = line.source.id === current.node.id;
-            const isTargetNode = line.target.id === current.node.id;
-            if (isSourceNode || isTargetNode) {
-                const node= isSourceNode ? line.target : line.source;
-                if (current.pointers.length < 1 || node.id !== current.pointers[current.pointers.length - 1].id) {
-                    neighbors.push({
-                        node: isSourceNode ? line.target : line.source,
-                        pointers: [...current.pointers, current.node],
-                        weight: current.weight + line.weight,
-                    });
-                }
-            }
+        setSettings((prevValue) => {
+            return {
+                ...prevValue,
+                [key]: value,
+            };
         });
-        return neighbors;
     }
+
+    async function search(){
+        setPath({});
+        if (!settings.source || !settings.target) return;
+        setPath(await dfs(settings.source, settings.target, settings.visualisation));
+    }
+
+    React.useEffect(() => {
+        return () => {
+          resetPath();
+        };
+      }, []);
 
 
     return (
@@ -79,8 +52,8 @@ export default function SearchPage() {
                 id="source-select"
                 options={nodes}
                 fullWidth
-                value={sourceNode}
-                onChange={(e, value) => setSourceNode(value)}
+                value={settings.source}
+                onChange={(e, value) => changeSettings('source', value)}
                 renderInput={(params) => <TextField {...params} label="Початкова вершина" />}
                 noOptionsText='Немає вершин'
                 isOptionEqualToValue={(option, value) => option.id === value.id}
@@ -91,13 +64,13 @@ export default function SearchPage() {
                 id="target-select"
                 options={nodes}
                 fullWidth
-                value={targetNode}
-                onChange={(e, value) => setTargetNode(value)}
+                value={settings.target}
+                onChange={(e, value) => changeSettings('target', value)}
                 renderInput={(params) => <TextField {...params} label="Цільова вершина" />}
                 noOptionsText='Немає вершин'
                 isOptionEqualToValue={(option, value) => option.id === value.id}
             />
-            <FormControl sx={{ mb: '20px' }}>
+            <FormControl sx={{ mb: '10px' }}>
                 <FormLabel id="radio-buttons-group-label">Алгоритм</FormLabel>
                 <RadioGroup
                     aria-labelledby="radio-buttons-group-label"
@@ -107,9 +80,28 @@ export default function SearchPage() {
                     <FormControlLabel value={0} control={<Radio />} label="Пошук вглиб" />
                 </RadioGroup>
             </FormControl>
-            <Box width='100%' display='flex' justifyContent='center' mb='10px'>
-                <Button disabled={sourceNode === null || targetNode === null} onClick={dfs}>Виконати</Button>
+            <Box sx={{marginBlock: '5px'}}>
+            <FormControlLabel control={<Switch value={settings.visualisation} onChange={(e, checked)=>changeSettings('visualisation', checked)} />} label="Візуалізація пошуку" />
             </Box>
+            <Box width='100%' display='flex' justifyContent='center' mb='10px'>
+                <Button disabled={settings.source === null || settings.target === null} onClick={search}>Виконати</Button>
+            </Box>
+            {path.nodes &&
+                <>
+                    <Typography variant='h6' mt={2} mb={1}>
+                        Найкоротший шлях
+                    </Typography>
+                    <Typography variant='body1' marginBlock={1} sx={{ color: theme.palette.text.secondary}}>
+                        {path.nodes}
+                    </Typography>
+                    <Typography variant='body1' marginBlock={1} sx={{ color: theme.palette.text.secondary}}>
+                        {'Довжина: ' + path.weight + ' км.'}
+                    </Typography>
+                    <Typography variant='body1' marginBlock={1} sx={{ color: theme.palette.text.secondary}}>
+                        {'Час виконання: ' + path.time + ' мс.'}
+                    </Typography>
+                </>
+            }
         </>
     )
 }

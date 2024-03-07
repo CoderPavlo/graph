@@ -41,8 +41,7 @@ export default function EditPage() {
         }
         setLineError(!addLine({
             id: lines.length > 0 ? lines[lines.length - 1].id + 1 : 0,
-            source: source,
-            target: target,
+            nodesId: [source.id, target.id],
             weight: Number(weight),
         }));
         setSource(null);

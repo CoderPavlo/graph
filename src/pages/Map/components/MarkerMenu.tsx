@@ -17,10 +17,10 @@ export default function MarkerMenu({ anchorPosition, onClose, node }: IMarkerMen
         { Icon: Map, label: node?.state, },
     ]
 
-    const { lines, deleteNode } = useGraph();
+    const { lines, deleteNode, getNodesFromLine } = useGraph();
 
     const deleteClick = () => {
-        setDeleteLines(lines.filter(item => item.source.id === node?.id || item.target.id === node?.id));
+        setDeleteLines(lines.filter(item => item.nodesId[0] === node?.id || item.nodesId[1] === node?.id));
         setDialogOpen(true);
 
     }
@@ -70,10 +70,14 @@ export default function MarkerMenu({ anchorPosition, onClose, node }: IMarkerMen
                                 &ensp;ребер:<br />
                             </>
                         }
-                        {deleteLines.map((item, index) =>
-                            <div key={index}>
-                                &emsp;– {item.source.name + ' - ' + item.target.name}<br />
-                            </div>
+                        {deleteLines.map((item, index) => {
+                            const {source, target} = getNodesFromLine(item);
+                            return (
+                                <div key={index}>
+                                    &emsp;– {source?.name + ' - ' + target?.name}<br />
+                                </div>
+                            )
+                        }
                         )}
                     </DialogContentText>
                 </DialogContent>
