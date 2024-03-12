@@ -1,5 +1,5 @@
 import { ILine, INode, IShortestPath } from "../../data/interfaces";
-import { TSetNodesState, } from "../types/types";
+import { TAlgoritm, TSetNodesState, } from "../types/types";
 import { selectPathInGraph } from "./path";
 
 interface IPath {
@@ -16,13 +16,13 @@ async function delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export async function depthFirstSearch(sourceNode: INode, targetNode: INode, visualisation: boolean, nodes: INode[], lines: ILine[], setNodesState: TSetNodesState): Promise<IShortestPath> {
+export async function searchPath(sourceNode: INode, targetNode: INode, visualisation: boolean, algorithm: TAlgoritm, nodes: INode[], lines: ILine[], setNodesState: TSetNodesState): Promise<IShortestPath> {
     let unrevealed: IPath[] = [{ node: sourceNode, pointers: [], weight: 0 }];
     let revealed: IPath[] = [];
     let minWeight = 1e100;
     const startTime: Date = new Date();
     while (unrevealed.length > 0) {
-        const currentNode: IPath = unrevealed.pop()!;
+        const currentNode: IPath = algorithm==='dfs' ? unrevealed.pop()! : unrevealed.shift()!;
         revealed.push(currentNode);
         if (visualisation) {
             selectPathInGraph([...currentNode.pointers, currentNode.node], false, setNodesState);

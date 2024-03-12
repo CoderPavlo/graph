@@ -5,8 +5,8 @@ import { addLineToGraph, deleteLineFromGraph, updateLineInGraph } from './functi
 import { addNodeToGraph, deleteNodeFromGraph, readNodesFromLine } from './functions/nodeCRUD';
 import { resetPathInGraph, selectPathInGraph } from './functions/path';
 
-import { TAF, TAddLineAF, TAddNodeAF, TDeleteAF, TDfsAF, TGetNodesAF, TSelectPathAF, TUpdateLineAF } from "./types/types";
-import { depthFirstSearch } from './functions/searchPath';
+import { TAF, TAddLineAF, TAddNodeAF, TDeleteAF, TGetNodesAF, TSelectPathAF, TSspAF, TUpdateLineAF } from "./types/types";
+import { searchPath } from './functions/searchPath';
 
 interface IGraphContextProps {
     nodes: INode[],
@@ -22,7 +22,7 @@ interface IGraphContextProps {
     deleteGraph: TAF,
     selectPath: TSelectPathAF,
     resetPath: TAF,
-    dfs: TDfsAF,
+    searchShortestPath: TSspAF,
 }
 
 const GraphContext = React.createContext<IGraphContextProps | undefined>(undefined);
@@ -53,7 +53,7 @@ export function GraphProvider({ children }: IGraphProviderProps) {
     const selectPath: TSelectPathAF = (nodesParam, report) => selectPathInGraph(nodesParam, report, setNodesState);
     const resetPath = () => resetPathInGraph(setNodesState);
 
-    const dfs: TDfsAF = async (source, target, visualisation) => depthFirstSearch(source, target, visualisation, nodes, lines, setNodesState);
+    const searchShortestPath: TSspAF = async (source, target, visualisation, algorithm) => searchPath(source, target, visualisation, algorithm, nodes, lines, setNodesState);
     return (
         <GraphContext.Provider
             value={{
@@ -69,7 +69,7 @@ export function GraphProvider({ children }: IGraphProviderProps) {
                 deleteGraph,
                 selectPath,
                 resetPath,
-                dfs,
+                searchShortestPath,
             }}>
             {children}
         </GraphContext.Provider>

@@ -4,20 +4,22 @@ import { useGraph } from '../../context/Graph';
 import { INode, IShortestPath } from '../../data/interfaces';
 
 import { useTheme } from '@mui/material/styles';
+import { TAlgoritm } from '../../context/types/types';
 
-export interface ISearchSettings{
+export interface ISearchSettings {
     source: INode | null,
     target: INode | null,
+    algorithm: TAlgoritm,
     visualisation: boolean,
 }
 export default function SearchPage() {
     const theme = useTheme();
-    const { nodes, resetPath, dfs } = useGraph();
+    const { nodes, resetPath, searchShortestPath } = useGraph();
 
     const [path, setPath] = React.useState<IShortestPath>({});
-    const [settings, setSettings] = React.useState<ISearchSettings>({source: null, target: null, visualisation: false});
+    const [settings, setSettings] = React.useState<ISearchSettings>({ source: null, target: null, algorithm: 'dfs', visualisation: false });
 
-    function changeSettings(key: 'source' | 'target' | 'visualisation', value: INode | boolean | null) {
+    function changeSettings(key: 'source' | 'target' | 'algorithm' | 'visualisation', value: INode | TAlgoritm | boolean | null) {
         setPath({});
         resetPath();
         setSettings((prevValue) => {
@@ -28,17 +30,18 @@ export default function SearchPage() {
         });
     }
 
-    async function search(){
+    async function search() {
         setPath({});
         if (!settings.source || !settings.target) return;
-        setPath(await dfs(settings.source, settings.target, settings.visualisation));
+        const shortestPath: IShortestPath = await searchShortestPath(settings.source, settings.target, settings.visualisation, settings.algorithm);
+        setPath(shortestPath);
     }
 
     React.useEffect(() => {
         return () => {
-          resetPath();
+            resetPath();
         };
-      }, []);
+    }, []);
 
 
     return (
@@ -74,14 +77,16 @@ export default function SearchPage() {
                 <FormLabel id="radio-buttons-group-label">Алгоритм</FormLabel>
                 <RadioGroup
                     aria-labelledby="radio-buttons-group-label"
-                    defaultValue={0}
                     name="radio-buttons-group"
+                    value={settings.algorithm}
+                    onChange={(e, value) => changeSettings('algorithm', value as TAlgoritm)}
                 >
-                    <FormControlLabel value={0} control={<Radio />} label="Пошук вглиб" />
+                    <FormControlLabel value={'dfs'} control={<Radio />} label="Пошук вглиб" />
+                    <FormControlLabel value={'bfs'} control={<Radio />} label="Пошук вшир" />
                 </RadioGroup>
             </FormControl>
-            <Box sx={{marginBlock: '5px'}}>
-            <FormControlLabel control={<Switch value={settings.visualisation} onChange={(e, checked)=>changeSettings('visualisation', checked)} />} label="Візуалізація пошуку" />
+            <Box sx={{ marginBlock: '5px' }}>
+                <FormControlLabel control={<Switch value={settings.visualisation} onChange={(e, checked) => changeSettings('visualisation', checked)} />} label="Візуалізація пошуку" />
             </Box>
             <Box width='100%' display='flex' justifyContent='center' mb='10px'>
                 <Button disabled={settings.source === null || settings.target === null} onClick={search}>Виконати</Button>
@@ -91,13 +96,13 @@ export default function SearchPage() {
                     <Typography variant='h6' mt={2} mb={1}>
                         Найкоротший шлях
                     </Typography>
-                    <Typography variant='body1' marginBlock={1} sx={{ color: theme.palette.text.secondary}}>
+                    <Typography variant='body1' marginBlock={1} sx={{ color: theme.palette.text.secondary }}>
                         {path.nodes}
                     </Typography>
-                    <Typography variant='body1' marginBlock={1} sx={{ color: theme.palette.text.secondary}}>
+                    <Typography variant='body1' marginBlock={1} sx={{ color: theme.palette.text.secondary }}>
                         {'Довжина: ' + path.weight + ' км.'}
                     </Typography>
-                    <Typography variant='body1' marginBlock={1} sx={{ color: theme.palette.text.secondary}}>
+                    <Typography variant='body1' marginBlock={1} sx={{ color: theme.palette.text.secondary }}>
                         {'Час виконання: ' + path.time + ' мс.'}
                     </Typography>
                 </>
