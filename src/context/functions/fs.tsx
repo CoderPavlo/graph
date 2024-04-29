@@ -1,22 +1,19 @@
-import { ILine, INode, IShortestPath } from "../../data/interfaces";
-import { TAlgoritm, TSetNodesState, } from "../types/types";
-import { selectPathInGraph } from "./path";
+import { ILine, INode, IShortestPath, IPath } from "../../data/interfaces";
+import { TAlgoritm, TSetLinesState, TSetNodesState, } from "../types/types";
+import { getPathInGraph, resetPathInGraph, selectPathInGraph } from "./path";
 
-interface IPath {
-    node: INode,
-    pointers: INode[],
-    weight: number,
-}
 function iSShortestPath(current: IPath, paths: IPath[]): boolean {
     //Перевіряє чи шлях вже є в масиві і якщо так то чи довжина менша за наявну в масиві
     return !paths.some(path => path.node.id === current.node.id && path.weight <= current.weight);
 }
 
-async function delay(ms: number) {
+export async function delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export async function searchPath(sourceNode: INode, targetNode: INode, visualisation: boolean, algorithm: TAlgoritm, nodes: INode[], lines: ILine[], setNodesState: TSetNodesState): Promise<IShortestPath> {
+
+
+export async function fs(sourceNode: INode, targetNode: INode, visualisation: boolean, algorithm: TAlgoritm, nodes: INode[], lines: ILine[], setNodesState: TSetNodesState, setLinesState: TSetLinesState): Promise<IShortestPath> {
     let unrevealed: IPath[] = [{ node: sourceNode, pointers: [], weight: 0 }];
     let revealed: IPath[] = [];
     let minWeight = 1e100;
@@ -25,7 +22,8 @@ export async function searchPath(sourceNode: INode, targetNode: INode, visualisa
         const currentNode: IPath = algorithm==='dfs' ? unrevealed.pop()! : unrevealed.shift()!;
         revealed.push(currentNode);
         if (visualisation) {
-            selectPathInGraph([...currentNode.pointers, currentNode.node], false, setNodesState);
+            resetPathInGraph(setNodesState, setLinesState);
+            selectPathInGraph([...currentNode.pointers, currentNode.node], '#1ea54c', setNodesState, setLinesState);
             await delay(500);
         }
         if (targetNode.id === currentNode.node.id) {
@@ -43,21 +41,23 @@ export async function searchPath(sourceNode: INode, targetNode: INode, visualisa
     const pathsToTarget = revealed.filter(path => path.node.id === targetNode.id);
     const minWeightPath = pathsToTarget.reduce((minPath, path) => (path.weight < minPath.weight ? path : minPath), pathsToTarget[0]);
     const pathNodes = [...minWeightPath.pointers, minWeightPath.node];
+    resetPathInGraph(setNodesState, setLinesState);
+    selectPathInGraph(pathNodes, '#1ea54c', setNodesState, setLinesState);
     return {
-        nodes: selectPathInGraph(pathNodes, true, setNodesState) as string,
+        nodes: getPathInGraph(pathNodes),
         weight: minWeightPath.weight,
         time: endTime.getTime() - startTime.getTime(),
     };
 }
 
-function getNeighbors(current: IPath, nodes: INode[], lines: ILine[]): IPath[] {
+export function getNeighbors(current: IPath, nodes: INode[], lines: ILine[]): IPath[] {
     const neighbors: IPath[] = [];
     lines.forEach((line) => {
         const isSourceNode = line.nodesId[0] === current.node.id;
         const isTargetNode = line.nodesId[1] === current.node.id;
         if (isSourceNode || isTargetNode) {
             const nodeId = isSourceNode ? line.nodesId[1] : line.nodesId[0];
-            if (current.pointers.find(node => node.id === nodeId) === undefined) {
+            if (!current.pointers.some(node => node.id === nodeId)){
 
                 const node = nodes.find(item => item.id === nodeId);
                 if (node)

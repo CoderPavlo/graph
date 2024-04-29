@@ -3,10 +3,13 @@ import { ILine, INode } from '../data/interfaces';
 import { deleteGraphValues, getDefaultValue, resetGraphValues, writeLocalStorage } from './functions/graphCRUD';
 import { addLineToGraph, deleteLineFromGraph, updateLineInGraph } from './functions/lineCRUD';
 import { addNodeToGraph, deleteNodeFromGraph, readNodesFromLine } from './functions/nodeCRUD';
-import { resetPathInGraph, selectPathInGraph } from './functions/path';
+import { resetPathInGraph } from './functions/path';
 
-import { TAF, TAddLineAF, TAddNodeAF, TDeleteAF, TGetNodesAF, TSelectPathAF, TSspAF, TUpdateLineAF } from "./types/types";
-import { searchPath } from './functions/searchPath';
+import { TAF, TAddLineAF, TAddNodeAF, TDeleteAF, TGetNodesAF, TSspAF, TUpdateLineAF } from "./types/types";
+import { fs } from './functions/fs';
+import { uls } from './functions/uls';
+import { bls } from './functions/bls';
+import { dijkstra } from './functions/dijkstra';
 
 interface IGraphContextProps {
     nodes: INode[],
@@ -20,7 +23,6 @@ interface IGraphContextProps {
     getNodesFromLine: TGetNodesAF,
     resetGraph: TAF,
     deleteGraph: TAF,
-    selectPath: TSelectPathAF,
     resetPath: TAF,
     searchShortestPath: TSspAF,
 }
@@ -50,10 +52,22 @@ export function GraphProvider({ children }: IGraphProviderProps) {
     const resetGraph = () => resetGraphValues(setNodes, setLines);
     const deleteGraph = () => deleteGraphValues(setNodes, setLines);
 
-    const selectPath: TSelectPathAF = (nodesParam, report) => selectPathInGraph(nodesParam, report, setNodesState);
-    const resetPath = () => resetPathInGraph(setNodesState);
+    const resetPath = () => resetPathInGraph(setNodesState, setLinesState);
 
-    const searchShortestPath: TSspAF = async (source, target, visualisation, algorithm) => searchPath(source, target, visualisation, algorithm, nodes, lines, setNodesState);
+    const searchShortestPath: TSspAF = async (source, target, visualisation, algorithm) => {
+        switch(algorithm) {
+            case 'bfs':
+            case 'dfs':
+                return fs(source, target, visualisation, algorithm, nodes, lines, setNodesState, setLinesState);
+            case 'uls':
+                return uls(source, target, visualisation, nodes, lines, setNodesState, setLinesState);
+            case 'bls':
+                return bls(source, target, visualisation, nodes, lines, setNodesState, setLinesState);
+            default:
+                return dijkstra(source, target, visualisation, nodes, lines, setNodesState, setLinesState);
+        }
+
+    }
     return (
         <GraphContext.Provider
             value={{
@@ -67,7 +81,6 @@ export function GraphProvider({ children }: IGraphProviderProps) {
                 getNodesFromLine,
                 resetGraph,
                 deleteGraph,
-                selectPath,
                 resetPath,
                 searchShortestPath,
             }}>

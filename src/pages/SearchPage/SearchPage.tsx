@@ -83,6 +83,10 @@ export default function SearchPage() {
                 >
                     <FormControlLabel value={'dfs'} control={<Radio />} label="Пошук вглиб" />
                     <FormControlLabel value={'bfs'} control={<Radio />} label="Пошук вшир" />
+                    <FormControlLabel value={'uls'} control={<Radio />} label="Однонаправлений хвильовий пошук" />
+                    <FormControlLabel value={'bls'} control={<Radio />} label="Двонаправлений хвильовий пошук" />
+                    <FormControlLabel value={'dijkstra'} control={<Radio />} label="Алгоритм Дейкстри" />
+
                 </RadioGroup>
             </FormControl>
             <Box sx={{ marginBlock: '5px' }}>
@@ -99,9 +103,12 @@ export default function SearchPage() {
                     <Typography variant='body1' marginBlock={1} sx={{ color: theme.palette.text.secondary }}>
                         {path.nodes}
                     </Typography>
-                    <Typography variant='body1' marginBlock={1} sx={{ color: theme.palette.text.secondary }}>
-                        {'Довжина: ' + path.weight + ' км.'}
-                    </Typography>
+                    {path.weight &&
+                        <Typography variant='body1' marginBlock={1} sx={{ color: theme.palette.text.secondary }}>
+                            {'Довжина: ' + path.weight + ' км.'}
+                        </Typography>
+                    }
+
                     <Typography variant='body1' marginBlock={1} sx={{ color: theme.palette.text.secondary }}>
                         {'Час виконання: ' + path.time + ' мс.'}
                     </Typography>

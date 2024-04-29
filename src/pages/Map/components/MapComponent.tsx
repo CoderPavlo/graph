@@ -5,7 +5,7 @@ import { GeoJsonObject, LineString, MultiLineString } from 'geojson';
 
 import ukraineJson from '../../../data/ukraine.json'
 
-import { icon, iconSelected } from '../Icon/Icon'
+import { createIcon } from '../Icon/Icon'
 
 import { useTheme } from '@mui/material/styles';
 import { useGraph } from '../../../context/Graph';
@@ -63,20 +63,11 @@ export default function Map() {
                 const { source, target } = getNodesFromLine(line);
                 if (source && target) {
                     let polyline: L.Polyline<LineString | MultiLineString, any>;
-                    if (source.selected && target.selected) {
-                        polyline = L.polyline([[source.lat, source.lng], [target.lat, target.lng]], {
-                            color: theme.palette.primary.main,
-                            weight: 5,          
-                            dashArray: '5, 5', 
-                        }).addTo(mapInstance.current);
-                    }
-                    else {
-                        polyline = L.polyline([[source.lat, source.lng], [target.lat, target.lng]], {
-                            color: theme.palette.text.secondary,
-                            weight: 3,
-                            dashArray: '5, 5',
-                        }).addTo(mapInstance.current);
-                    }
+                    polyline = L.polyline([[source.lat, source.lng], [target.lat, target.lng]], {
+                        color: line.color ? line.color : theme.palette.text.secondary,
+                        weight: line.color ? 5 : 3,
+                        dashArray: '5, 5',
+                    }).addTo(mapInstance.current);
                     polyline.on('click', (event) => handlePolylineClick(event, line));
 
                     polyline.bindTooltip(source.name + ' - ' + target.name + ' ' + line.weight + ' км.');
@@ -104,7 +95,7 @@ export default function Map() {
                 <GeoJSON data={ukraineJson as GeoJsonObject} />
                 {nodes.map(point => (
 
-                    <Marker key={point.id} position={[point.lat, point.lng]} icon={point.selected ? iconSelected : icon} eventHandlers={{ click: (event) => handleMarkerClick(event, point) }}>
+                    <Marker key={point.id} position={[point.lat, point.lng]} icon={createIcon(point.color ? point.color : theme.palette.text.secondary)} eventHandlers={{ click: (event) => handleMarkerClick(event, point) }}>
                         <Tooltip permanent>
                             {point.shortName}
                         </Tooltip>

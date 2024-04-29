@@ -7,13 +7,14 @@ export interface INode {
     lat: number,
     district: string,
     state: string,
-    selected?: boolean,
+    color?: string,
 }
 
 export interface ILine {
     id: number,
     nodesId: [number, number],
     weight: number,
+    color?: string,
 }
 
 export interface IGraph {
@@ -25,4 +26,10 @@ export interface IShortestPath {
     nodes?: string,
     weight?: number,
     time?: number,
+}
+
+export interface IPath {
+    node: INode,
+    pointers: INode[],
+    weight: number,
 }
